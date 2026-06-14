@@ -87,10 +87,13 @@ EOF
 _fetch() {
   local url="$1" out="$2"
   if command -v aria2c >/dev/null 2>&1; then
+    # quiet, single updating progress line: no periodic summary blocks, no result
+    # table, errors-only log (transient mirror 5xx are retried automatically).
     aria2c -x4 -s4 -k1M --continue=true --auto-file-renaming=false --allow-overwrite=true \
-           --console-log-level=warn --summary-interval=10 \
+           --summary-interval=0 --download-result=hide --console-log-level=error \
+           --max-tries=10 --retry-wait=3 \
            -d "$(dirname "$out")" -o "$(basename "$out")" "$url"
   else
-    curl -fL --retry 3 -C - -o "$out" "$url"
+    curl -fL --retry 5 --retry-delay 3 -C - -o "$out" "$url"
   fi
 }
