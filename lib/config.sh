@@ -51,7 +51,8 @@ wharf_image_name() {
 : "${KEYBOARD:=}"                 # keyboard layout
 
 : "${NAME:=wharf}"               # VM / process name
-: "${STORAGE:=$WHARF_HOME/storage}"   # where ISO, disk, EFI vars live
+: "${WHARF_VMS:=$HOME/.wharf}"   # registry root for named VMs (wharf new/ls/rm)
+: "${STORAGE:=$WHARF_HOME/storage}"   # where ISO, disk, EFI vars live (default VM)
 : "${RDP_PORT:=13389}"           # host port forwarded to guest RDP (3389)
 : "${VNC_DISPLAY:=0}"            # VNC display number (port = 5900 + this)
 : "${USE_TPM:=N}"                # add an emulated TPM 2.0 (needs swtpm)
@@ -59,19 +60,23 @@ wharf_image_name() {
 : "${VERIFY:=Y}"                 # verify downloaded ISO against known SHA-256
 : "${VIRTIO_VERSION:=0.1.285}"   # qemus/virtiso-arm driver pack version
 
-# ---- derived paths ----------------------------------------------------------
 EDK2_CODE="${EDK2_CODE:-/opt/homebrew/share/qemu/edk2-aarch64-code.fd}"
 EDK2_VARS_TMPL="${EDK2_VARS_TMPL:-/opt/homebrew/share/qemu/edk2-arm-vars.fd}"
-VARS="$STORAGE/efi-vars.fd"
-DISK="$STORAGE/data.img"
-ISO="$STORAGE/${NAME}.iso"            # raw (downloaded) ISO
-ISO_PREPARED="$STORAGE/${NAME}.prepared.iso"  # after driver+XML injection
-PIDFILE="$STORAGE/qemu.pid"
-MONITOR="$STORAGE/qemu.monitor.sock"
 
-# load user config file if present
+# load user config file if present (can override STORAGE/NAME/etc.)
 [ -f "$WHARF_HOME/wharf.conf" ] && source "$WHARF_HOME/wharf.conf"
-mkdir -p "$STORAGE"
+
+# ---- derived paths (a function, so named-VM resolution can re-derive) --------
+config_paths() {
+  VARS="$STORAGE/efi-vars.fd"
+  DISK="$STORAGE/data.img"
+  ISO="$STORAGE/${NAME}.iso"                     # raw (downloaded) ISO
+  ISO_PREPARED="$STORAGE/${NAME}.prepared.iso"   # after driver+XML injection
+  PIDFILE="$STORAGE/qemu.pid"
+  MONITOR="$STORAGE/qemu.monitor.sock"
+  mkdir -p "$STORAGE"
+}
+config_paths
 
 # ---- helpers ----------------------------------------------------------------
 log()  { printf '\033[1;36m❯ %s\033[0m\n' "$*"; }

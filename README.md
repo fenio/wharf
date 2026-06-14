@@ -40,26 +40,42 @@ Run `./wharf doctor` to check everything.
 
 ## Usage
 
+wharf manages multiple named VMs under `~/.wharf/<name>/`, auto-assigning a free
+VNC display and RDP port to each.
+
 ```bash
-cp wharf.conf.example wharf.conf      # optional: edit VERSION, RAM, etc.
+# create + install a VM, zero-touch to desktop (settings via env or wharf.conf)
+VERSION=11 ./wharf new win11
+VERSION=11l RAM_SIZE=8G ./wharf new ltsc
 
-# install (auto-downloads, prepares, boots, installs — zero-touch to desktop)
-VERSION=11 ./wharf install
-# or bring your own ISO:  BOOT_ISO=/path/to/Win11_arm64.iso ./wharf install
+./wharf ls                 # list VMs: status, edition, VNC, RDP, disk
+./wharf run    win11       # boot an installed VM
+./wharf view   win11       # open a VNC viewer onto it
+./wharf status win11       # running? + how to connect
+./wharf stop   win11       # graceful ACPI shutdown (falls back to kill)
+./wharf rm     win11       # stop + delete the VM
 
-# day-to-day
-./wharf run         # boot the installed VM from its disk
-./wharf status      # is it running + how to view
-./wharf view        # open a VNC viewer
-./wharf stop        # graceful ACPI shutdown (falls back to kill)
+# bring your own ISO instead of auto-download:
+BOOT_ISO=/path/to/Win11_arm64.iso ./wharf new win11
 ```
 
-Then:
-- **Console:** VNC at `127.0.0.1:5900` — use **`127.0.0.1`, never `localhost`**
-  (localhost → IPv6 `::1`, where macOS's own Screen Sharing answers and demands
-  your Mac password). Apple's Screen Sharing app also refuses loopback; use
-  **TigerVNC** (`brew install --cask tigervnc-viewer`).
-- **RDP:** `127.0.0.1:13389` once installed (user `Docker` / pass `admin`).
+`./wharf ls` example:
+```
+NAME    STATUS   EDITION          VNC               RDP               DISK
+win11   running  Windows 11 Pro   127.0.0.1:5900    127.0.0.1:13389   12G
+ltsc    stopped  Windows 11 LTSC  127.0.0.1:5901    127.0.0.1:13390   —
+```
+
+(Legacy single-VM mode still works: `./wharf install` uses `./storage`, and
+`run/stop/status/view` with no name act on it.)
+
+Connecting to a VM (ports shown by `wharf ls`):
+- **Console:** VNC at the listed `127.0.0.1:59NN` — use **`127.0.0.1`, never
+  `localhost`** (localhost → IPv6 `::1`, where macOS's own Screen Sharing answers
+  and demands your Mac password). Apple's Screen Sharing app also refuses
+  loopback; use **TigerVNC** (`brew install --cask tigervnc-viewer`).
+- **RDP** (full res/clipboard/audio): the listed `127.0.0.1:133NN` once installed
+  (user `Docker` / pass `admin`).
 
 ## Supported versions (same codes as dockur/windows-arm)
 
@@ -94,6 +110,7 @@ Then:
 ```
 wharf            CLI dispatcher (install/run/stop/status/view/doctor)
 lib/config.sh     defaults + wharf.conf/env loading + version map
+lib/vm.sh         named-VM registry (new/ls/rm, port allocation)
 lib/deps.sh       dependency checks (doctor)
 lib/iso.sh        acquire ISO (mirror map + SHA-256, aria2/curl)
 lib/prepare.sh    hdiutil extract + wimlib driver inject + mkisofs -udf
