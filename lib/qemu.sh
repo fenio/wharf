@@ -78,6 +78,10 @@ qemu_status() {
     display_hint
     return 0
   fi
+  if [ -f "$STORAGE/.installing" ]; then
+    warn "VM '${NAME}' is installing (downloading/preparing media)..."
+    return 0
+  fi
   warn "VM '${NAME}' is not running."
   return 1
 }

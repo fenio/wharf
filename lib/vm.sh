@@ -61,7 +61,8 @@ vm_ls() {
     [ -d "$d" ] || continue
     name=$(basename "$d")
     status=stopped
-    if vm_running "${d%/}"; then status=running; fi
+    if vm_running "${d%/}"; then status=running
+    elif [ -f "${d%/}/.installing" ]; then status=installing; fi
     disk=$(du -h "$d/data.img" 2>/dev/null | awk '{print $1}') || disk=""; [ -n "$disk" ] || disk="—"
     ver=$(_vm_field "${d%/}" VERSION) || ver=""; [ -n "$ver" ] || ver="?"
     vd=$(_vm_field "${d%/}" VNC_DISPLAY) || vd=0; case "$vd" in ''|*[!0-9]*) vd=0 ;; esac

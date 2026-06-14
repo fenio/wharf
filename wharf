@@ -39,12 +39,14 @@ usage() { sed -n '3,28p' "$WHARF_HOME/wharf" | sed 's/^# \{0,1\}//'; }
 cmd_install() {
   deps_require qemu-system-aarch64 qemu-img
   config_summary
+  : > "$STORAGE/.installing"   # state marker so 'wharf ls/status' shows "installing"
   firmware_setup           # edk2 code (ro) + writable vars copy
   iso_acquire              # download or locate the Windows ARM ISO  -> $ISO
   prepare_media            # inject virtio drivers + autounattend.xml -> $ISO_PREPARED
   disk_create              # qemu-img create growable raw -> $DISK
   log "Starting installer. This is unattended — it will reboot itself to the desktop."
   qemu_boot install        # boot Setup (disk-first, CD fallback)
+  rm -f "$STORAGE/.installing"   # qemu is up now; clear the marker
 }
 
 cmd_new() {
