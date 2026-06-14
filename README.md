@@ -33,7 +33,7 @@ Windows-ARM on Mac via QEMU+HVF.** That's `wharf`.
 
 - Apple silicon Mac.
 - `brew install qemu` (signed with the HVF entitlement — required).
-- For auto-prepare (roadmap): `brew install wimlib xorriso aria2`.
+- `brew install wimlib cdrtools aria2` (driver injection + UDF ISO build + fast download).
 - For TPM: `brew install swtpm` (and set `USE_TPM=Y`).
 
 Run `./wharf doctor` to check everything.
@@ -43,8 +43,9 @@ Run `./wharf doctor` to check everything.
 ```bash
 cp wharf.conf.example wharf.conf      # optional: edit VERSION, RAM, etc.
 
-# install (boots the unattended installer; drives itself to the desktop)
-BOOT_ISO=/path/to/Win11_arm64.iso ./wharf install
+# install (auto-downloads, prepares, boots, installs — zero-touch to desktop)
+VERSION=11 ./wharf install
+# or bring your own ISO:  BOOT_ISO=/path/to/Win11_arm64.iso ./wharf install
 
 # day-to-day
 ./wharf run         # boot the installed VM from its disk
@@ -73,23 +74,20 @@ Then:
 
 ## Status
 
+**Win11 ARM: validated zero-touch end-to-end — `VERSION=11 ./wharf install` reaches the desktop with no interaction.**
+
 | Area | State |
 |---|---|
-| QEMU+HVF launch (install/run/stop/status/view) | ✅ implemented & proven |
+| QEMU+HVF launch (install/run/stop/status/view) | ✅ proven |
 | Config / version model (dockur-compatible) | ✅ |
 | UEFI firmware + disk + user-mode net + VNC | ✅ |
-| Unattended `autounattend.xml` generation | ✅ (template) |
+| Unattended install — auto edition + OOBE-skip (BypassNRO) | ✅ proven zero-touch to desktop (Win11) |
 | Use an already-prepared ISO (e.g. dockur's) | ✅ |
-| **Auto ISO download** (mirror map + SHA-256, aria2/curl) | ✅ implemented¹ |
-| **virtio driver injection + ISO rebuild** (bsdtar/wimlib/xorriso) | ✅ implemented¹ |
+| **Auto ISO download** (mirror map + SHA-256, aria2/curl) | ✅ proven (Win11) |
+| **UDF ISO rebuild** (hdiutil extract + wimlib inject + mkisofs -udf) | ✅ proven (Win11) |
 | Emulated TPM 2.0 (`USE_TPM=Y`) | ✅ wired (needs swtpm) |
 | virtio-gpu display + drivers (nicer than ramfb) | 🔭 future |
 | tart-style OCI image distribution | 🔭 future |
-
-¹ Each operation is validated on macOS against real artifacts (bsdtar extract,
-  wimlib image-count parse + `$WinPEDriver$` driver add, xorriso EFI ISO build,
-  live mirror URLs). A full bare-ISO → prepared → boot run hasn't been executed
-  end-to-end yet (it's a multi-GB download); run `wharf install` to exercise it.
 
 ## Layout
 
@@ -97,12 +95,12 @@ Then:
 wharf            CLI dispatcher (install/run/stop/status/view/doctor)
 lib/config.sh     defaults + wharf.conf/env loading + version map
 lib/deps.sh       dependency checks (doctor)
-lib/iso.sh        acquire ISO (BYO / reuse / TODO: mido port)
-lib/prepare.sh    driver + autounattend injection (TODO: wim/xorriso)
+lib/iso.sh        acquire ISO (mirror map + SHA-256, aria2/curl)
+lib/prepare.sh    hdiutil extract + wimlib driver inject + mkisofs -udf
 lib/firmware.sh   edk2 code + writable vars
 lib/disk.sh       qemu-img growable disk
 lib/network.sh    user-mode net + RDP host-forward
 lib/display.sh    VNC + viewer launch
 lib/qemu.sh       assemble & run qemu-system-aarch64 -accel hvf
-assets/autounattend.xml.tmpl   unattended template (TPM/secureboot bypass)
+assets/autounattend.xml.tmpl   OOBE-skip answer file (dockur-ported)
 ```
