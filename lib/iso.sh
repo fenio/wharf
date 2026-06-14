@@ -11,7 +11,6 @@
 wharf_version_id() {
   case "$1" in
     11|11e|11l) echo "win11arm64" ;;
-    10|10e|10l) echo "win10arm64" ;;
     *)          echo "" ;;
   esac
 }
@@ -31,17 +30,6 @@ _iso_sources() {
     11l)
       echo "3dcdba9c9c0aa0430d4332b60c9afcb3cd613d648a49cbba2d4ef7b5978f32e8 https://software-static.download.prss.microsoft.com/dbazure/998969d5-f34g-4e03-ac9d-1f9786c66749/26100.1742.240906-0331.ge_release_svc_refresh_CLIENT_IOT_LTSC_EVAL_A64FRE_en-us.iso"
       echo "f8f068cdc90c894a55d8c8530db7c193234ba57bb11d33b71383839ac41246b4 https://dl.bobpony.com/windows/11/X23-81950_26100.1742.240906-0331.ge_release_svc_refresh_CLIENT_ENTERPRISES_OEM_A64FRE_en-us.iso"
-      ;;
-    10)
-      echo "dcc63f43c85a7bbb12cf0ec69eaf27a3e8131f30c78c362ce1d2318e843d6d0c https://dl.bobpony.com/windows/10/en-us_windows_10_22h2_arm64.iso"
-      echo "101079b911c8c3dd9c9a88499a16b930fbf00cbaf901761d8265bb3a8fcd9ea9 https://archive.org/download/win-pro-10-22-h-2.15-arm-64-eng-intl-pro-ent-edu-n-mlf-x-23-67222/Win_Pro_10_22H2.15_Arm64_Eng_Intl_Pro_Ent_EDU_N_MLF_X23-67222.ISO"
-      ;;
-    10e)
-      echo "dcc63f43c85a7bbb12cf0ec69eaf27a3e8131f30c78c362ce1d2318e843d6d0c https://dl.bobpony.com/windows/10/en-us_windows_10_22h2_arm64.iso"
-      ;;
-    10l)
-      echo "d265df49b30a1477d010c79185a7bc88591a1be4b3eb690c994bed828ea17c00 https://dl.bobpony.com/windows/10/en-us_windows_10_iot_enterprise_ltsc_2021_arm64_dvd_e8d4fc46.iso"
-      echo "d265df49b30a1477d010c79185a7bc88591a1be4b3eb690c994bed828ea17c00 https://archive.org/download/windows-10-enterprise-ltsc-full-collection/en-us_windows_10_iot_enterprise_ltsc_2021_arm64_dvd_e8d4fc46.iso"
       ;;
   esac
 }

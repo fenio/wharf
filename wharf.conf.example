@@ -2,9 +2,8 @@
 # you don't set falls back to the defaults in lib/config.sh. Environment variables
 # still win over this file.
 
-# --- which Windows ---------------------------------------------------------
+# --- which Windows (Win11 ARM only; Win10 ARM doesn't boot on macOS QEMU) ---
 # 11  = Windows 11 Pro     11l = Windows 11 LTSC     11e = Windows 11 Enterprise
-# 10  = Windows 10 Pro     10l = Windows 10 LTSC     10e = Windows 10 Enterprise
 VERSION=11
 
 # --- resources -------------------------------------------------------------

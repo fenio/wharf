@@ -4,18 +4,19 @@
 #
 # Precedence (low → high): defaults here  <  ./wharf.conf  <  environment vars.
 
-# ---- supported Windows versions (same codes as dockur/windows-arm) -----------
-# Kept as a case-function (not an associative array) so this runs on macOS's
-# stock bash 3.2 — no Homebrew bash required.
-wharf_versions_list() { echo "11 11l 11e 10 10l 10e"; }
+# ---- supported Windows versions ---------------------------------------------
+# Win11 ARM only. Win10 ARM is intentionally unsupported: it boots fine on Linux
+# (dockur) but hangs in QEMU's aarch64 firmware ("Start boot option") under stock
+# brew QEMU on Apple silicon — both HVF and TCG — while Win11 boots on the
+# identical stack. Only UTM's patched QEMU gets its bootmgr running (and even then
+# hits 0xc000000f). Use dockur on Linux if you need Win10 ARM. See win10 note in README.
+# Case-functions (not associative arrays) so this runs on stock macOS bash 3.2.
+wharf_versions_list() { echo "11 11l 11e"; }
 wharf_version_label() {
   case "$1" in
     11)  echo "Windows 11 Pro" ;;
     11l) echo "Windows 11 LTSC" ;;
     11e) echo "Windows 11 Enterprise" ;;
-    10)  echo "Windows 10 Pro" ;;
-    10l) echo "Windows 10 LTSC" ;;
-    10e) echo "Windows 10 Enterprise" ;;
     *)   echo "" ;;
   esac
 }
@@ -28,9 +29,6 @@ wharf_image_name() {
     11)  echo "Windows 11 Pro" ;;
     11l) echo "Windows 11 IoT Enterprise LTSC" ;;
     11e) echo "Windows 11 Enterprise" ;;
-    10)  echo "Windows 10 Pro" ;;
-    10l) echo "Windows 10 IoT Enterprise LTSC" ;;
-    10e) echo "Windows 10 Enterprise" ;;
     *)   echo "Windows 11 Pro" ;;
   esac
 }

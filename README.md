@@ -1,6 +1,6 @@
 # wharf
 
-**Run Windows 11 / 10 ARM on Apple silicon — the "dockur way", but native.**
+**Run Windows 11 ARM on Apple silicon — the "dockur way", but native.**
 
 `wharf` gives you dockur's ergonomics (pick a `VERSION`, set RAM/CPU/disk, get an
 auto-installing Windows with a viewer) while running **QEMU directly on macOS with
@@ -10,7 +10,7 @@ the HVF accelerator** — the same engine UTM uses for Windows, single-layer and
 macOS (Apple silicon)
 └─ HVF (Hypervisor.framework)        ← single layer, hardware accelerated
    └─ qemu-system-aarch64 -accel hvf
-      └─ Windows 11 / 10 ARM
+      └─ Windows 11 ARM
 ```
 
 ## Why this exists
@@ -27,7 +27,7 @@ either isn't exposed (Docker Desktop) or **hangs Windows at boot** (we verified 
 on `apple/container`'s nested KVM: Linux boots fine, Windows spins at 0 bytes written).
 
 So the unfilled niche is exactly this: **headless/scriptable, auto-installing
-Windows-ARM on Mac via QEMU+HVF.** That's `wharf`.
+Windows 11 ARM on Mac via QEMU+HVF.** That's `wharf`.
 
 ## Requirements
 
@@ -77,16 +77,19 @@ Connecting to a VM (ports shown by `wharf ls`):
 - **RDP** (full res/clipboard/audio): the listed `127.0.0.1:133NN` once installed
   (user `Docker` / pass `admin`).
 
-## Supported versions (same codes as dockur/windows-arm)
+## Supported versions (Windows 11 ARM only — same codes as dockur/windows-arm)
 
 | `VERSION` | Edition |
 |---|---|
 | `11`  | Windows 11 Pro |
 | `11l` | Windows 11 LTSC |
 | `11e` | Windows 11 Enterprise |
-| `10`  | Windows 10 Pro |
-| `10l` | Windows 10 LTSC |
-| `10e` | Windows 10 Enterprise |
+
+> **No Windows 10?** Win10 ARM boots fine on Linux (dockur) but **hangs in
+> QEMU's aarch64 firmware on Apple silicon** under stock brew QEMU (HVF *and*
+> TCG) — while Win11 boots on the identical stack. Only UTM's *patched* QEMU
+> gets its bootmgr running, and even then it `0xc000000f`s. If you need Win10
+> ARM, run **dockur on a Linux box / CI** and RDP in. wharf is Win11-only by design.
 
 ## Status
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# wharf — run Windows 11 / 10 ARM on Apple silicon, the "dockur way" but native.
+# wharf — run Windows 11 ARM on Apple silicon, the "dockur way" but native.
 #
 # Runs QEMU directly on macOS with the HVF accelerator (the engine UTM uses for
 # Windows) wrapped in dockur-style automation: auto ISO download + virtio driver
@@ -52,6 +52,7 @@ cmd_install() {
 cmd_new() {
   local name="${1:-}"
   [ -n "$name" ] || die "usage: wharf new <name>   (e.g. VERSION=11 wharf new win11)"
+  [ -n "$(wharf_version_label "$VERSION")" ] || die "Unknown VERSION='$VERSION'. Supported: $(wharf_versions_list)"
   mkdir -p "$WHARF_VMS"
   [ -d "$WHARF_VMS/$name" ] && die "VM '$name' already exists (wharf rm $name first)"
   deps_require qemu-system-aarch64 qemu-img
