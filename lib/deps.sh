@@ -13,12 +13,15 @@ deps_require() {
 deps_check_all() {
   log "wharf doctor"
   local ok=1
+  # required deps fail the check; optional ones (_opt) just warn
   _chk() { if command -v "$1" >/dev/null 2>&1; then echo "  ✓ $1"; else echo "  ✗ $1  ($2)"; ok=0; fi; }
+  _opt() { if command -v "$1" >/dev/null 2>&1; then echo "  ✓ $1"; else echo "  • $1 (optional — $2)"; fi; }
   _chk qemu-system-aarch64 "brew install qemu"
   _chk qemu-img            "brew install qemu"
-  _chk wimlib-imagex       "brew install wimlib   (driver/XML injection)"
-  _chk aria2c              "brew install aria2     (faster ISO download; optional)"
-  _chk swtpm               "brew install swtpm     (only if USE_TPM=Y)"
+  _chk wimlib-imagex       "brew install wimlib    (driver injection)"
+  _chk mkisofs             "brew install cdrtools  (UDF ISO build)"
+  _opt aria2c              "brew install aria2     (faster ISO download)"
+  _opt swtpm               "brew install swtpm     (only if USE_TPM=Y)"
   [ -f "$EDK2_CODE" ] && echo "  ✓ edk2 firmware ($EDK2_CODE)" || { echo "  ✗ edk2 firmware"; ok=0; }
   # HVF entitlement sanity
   if codesign -d --entitlements - "$(command -v qemu-system-aarch64)" 2>/dev/null | grep -q hypervisor; then
