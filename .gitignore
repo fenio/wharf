@@ -1,0 +1,9 @@
+# local config + runtime state
+wharf.conf
+storage/
+*.iso
+*.img
+*.fd
+*.log
+*.pid
+*.sock

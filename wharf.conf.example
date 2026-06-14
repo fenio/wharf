@@ -1,0 +1,29 @@
+# wharf.conf — copy to wharf.conf and edit. All values are optional; anything
+# you don't set falls back to the defaults in lib/config.sh. Environment variables
+# still win over this file.
+
+# --- which Windows ---------------------------------------------------------
+# 11  = Windows 11 Pro     11l = Windows 11 LTSC     11e = Windows 11 Enterprise
+# 10  = Windows 10 Pro     10l = Windows 10 LTSC     10e = Windows 10 Enterprise
+VERSION=11
+
+# --- resources -------------------------------------------------------------
+RAM_SIZE=4G
+CPU_CORES=4
+DISK_SIZE=64G
+
+# --- account / locale ------------------------------------------------------
+USERNAME=Docker
+PASSWORD=admin
+LANGUAGE=English
+# REGION=en-US
+# KEYBOARD=0409:00000409
+
+# --- access ----------------------------------------------------------------
+RDP_PORT=13389      # connect Microsoft Remote Desktop to 127.0.0.1:13389
+VNC_DISPLAY=0       # console on 127.0.0.1:5900 (NOT localhost — see README)
+
+# --- options ---------------------------------------------------------------
+USE_TPM=N           # Y adds an emulated TPM 2.0 (needs: brew install swtpm)
+# BOOT_ISO=/path/to/Win11_arm64.iso   # bring your own / already-prepared ISO
+# STORAGE=/path/to/storage            # where ISO, disk and EFI vars are kept

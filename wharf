@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+#
+# wharf — run Windows 11 ARM on Apple silicon, the "dockur way" but native.
+#
+# Unlike dockur (QEMU inside a Linux container → needs nested KVM, hangs on Mac)
+# and unlike tart/lume/apple-container (Virtualization.framework → structurally
+# can't host Windows), wharf runs QEMU directly on macOS with the HVF
+# accelerator — the same engine UTM uses for Windows, single-layer and fast —
+# wrapped in dockur-style automation (auto ISO + driver inject + unattended
+# install + viewer).
+#
+# Subcommands:
+#   wharf install   acquire ISO, prepare media, create disk, boot the installer
+#   wharf run       boot an already-installed VM from its disk
+#   wharf stop      gracefully power off / kill the running VM
+#   wharf status    show whether the VM is running + how to view it
+#   wharf view      open a VNC viewer onto the running VM
+#   wharf doctor    check host dependencies
+#
+# Config: defaults live in lib/config.sh; override via ./wharf.conf or env vars.
+
+set -Eeuo pipefail
+
+WHARF_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export WHARF_HOME
+
+# shellcheck source=lib/config.sh
+source "$WHARF_HOME/lib/config.sh"
+for m in deps firmware disk network display qemu iso prepare; do
+  # shellcheck disable=SC1090
+  source "$WHARF_HOME/lib/$m.sh"
+done
+
+usage() { sed -n '3,30p' "$WHARF_HOME/wharf" | sed 's/^# \{0,1\}//'; }
+
+cmd_install() {
+  deps_require qemu-system-aarch64 qemu-img
+  config_summary
+  firmware_setup           # edk2 code (ro) + writable vars copy
+  iso_acquire              # download or locate the Windows ARM ISO  -> $ISO
+  prepare_media            # inject virtio drivers + autounattend.xml -> $ISO_PREPARED
+  disk_create              # qemu-img create growable raw -> $DISK
+  log "Starting installer. This is unattended — it will reboot itself to the desktop."
+  qemu_boot install        # attach ISO (bootindex 0), boot Setup
+}
+
+cmd_run() {
+  deps_require qemu-system-aarch64
+  [ -f "$DISK" ] || die "No disk at $DISK — run 'wharf install' first."
+  firmware_setup
+  qemu_boot run            # no ISO, boot from disk
+}
+
+cmd_stop()   { qemu_stop; }
+cmd_status() { qemu_status; }
+cmd_view()   { display_open; }
+cmd_doctor() { deps_check_all; }
+
+main() {
+  local sub="${1:-}"; shift || true
+  case "$sub" in
+    install) cmd_install "$@" ;;
+    run)     cmd_run "$@" ;;
+    stop)    cmd_stop "$@" ;;
+    status)  cmd_status "$@" ;;
+    view)    cmd_view "$@" ;;
+    doctor)  cmd_doctor "$@" ;;
+    ""|-h|--help|help) usage ;;
+    *) die "Unknown subcommand: $sub (try: wharf help)" ;;
+  esac
+}
+
+main "$@"
