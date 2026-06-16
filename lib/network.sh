@@ -10,8 +10,13 @@
 # Emits the QEMU -netdev/-device pair into the NET_OPTS array.
 
 network_opts() {
+  # Forward host ports to the guest. Bound to 127.0.0.1 (not all interfaces) so a
+  # VM isn't unintentionally exposed on the LAN; a same-host CI runner reaches it
+  # on loopback. SSH (22) is the headless/CI control channel (see guest-setup.ps1).
+  local fwd="hostfwd=tcp:127.0.0.1:${RDP_PORT}-:3389,hostfwd=udp:127.0.0.1:${RDP_PORT}-:3389"
+  fwd="${fwd},hostfwd=tcp:127.0.0.1:${SSH_PORT}-:22"
   NET_OPTS=(
-    -netdev "user,id=net0,hostfwd=tcp::${RDP_PORT}-:3389,hostfwd=udp::${RDP_PORT}-:3389"
+    -netdev "user,id=net0,${fwd}"
     -device "virtio-net-pci,netdev=net0"
   )
 }

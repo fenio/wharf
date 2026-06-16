@@ -51,6 +51,9 @@ prepare_media() {
   log "Staging drivers for the installed OS (\$OEM\$\\\$1\\Drivers)..."
   _stage_oem_drivers "$root" "$id" "$drv"
 
+  log "Staging guest setup (driver install + OpenSSH) to C:\\OEM..."
+  _stage_oem_setup "$root"
+
   log "Writing autounattend.xml ($USERNAME / $LANGUAGE)..."
   _render_autounattend > "$root/autounattend.xml"
 
@@ -114,11 +117,27 @@ _inject_drivers() {
   done
 }
 
-# put drivers on the ISO so the installed OS picks them up via DriverPaths/$OEM$
+# stage the first-logon setup script (+ optional SSH pubkey) into C:\OEM.
+# IMPORTANT: $OEM$ folders are only copied to %SystemDrive% by Windows Setup when
+# they live under \sources\$OEM$ on the media — NOT at the ISO root. (Staging at the
+# root silently no-ops: C:\OEM / C:\Drivers never appear and first-logon scripts
+# never run.) So everything goes under sources/$OEM$/$1/.
+_stage_oem_setup() {
+  local root="$1" dst="$root/sources/\$OEM\$/\$1/OEM"
+  mkdir -p "$dst"
+  cp "$WHARF_HOME/assets/guest-setup.ps1" "$dst/wharf-setup.ps1"
+  if [ -n "${WHARF_SSH_PUBKEY:-}" ] && [ -f "${WHARF_SSH_PUBKEY}" ]; then
+    cp "${WHARF_SSH_PUBKEY}" "$dst/authorized_keys"
+    log "  bundled SSH public key from $WHARF_SSH_PUBKEY"
+  fi
+}
+
+# put drivers on the ISO so the installed OS picks them up ($OEM$ -> C:\Drivers,
+# installed by guest-setup.ps1 via pnputil). Must be under \sources\$OEM$ (see above).
 _stage_oem_drivers() {
   local root="$1" id="$2" drv="$3" stage dst
   stage="$(_collect_drivers "$id" "$drv")"
-  dst="$root/\$OEM\$/\$1/Drivers"
+  dst="$root/sources/\$OEM\$/\$1/Drivers"
   mkdir -p "$dst"
   cp -RL "$stage/." "$dst/" 2>/dev/null || true
 }

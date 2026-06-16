@@ -66,7 +66,7 @@ qemu_boot() {
   sleep 2
   if qemu_status >/dev/null 2>&1; then
     log "Started (pid $(cat "$PIDFILE" 2>/dev/null))."
-    display_open || true
+    [ "${WHARF_HEADLESS:-}" = "1" ] || display_open || true
   else
     die "QEMU failed to start — see $STORAGE/qemu.log"
   fi

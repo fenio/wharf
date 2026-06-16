@@ -11,13 +11,21 @@ VNC_HOST="127.0.0.1"
 display_port() { echo $(( 5900 + VNC_DISPLAY )); }
 
 display_opts() {
-  # ramfb = simple framebuffer Windows can drive without extra drivers.
-  DISPLAY_OPTS=( -device ramfb -vnc "${VNC_HOST}:${VNC_DISPLAY}" )
+  # ramfb         = simple framebuffer Windows drives with no extra driver (default).
+  # virtio-gpu-pci = needs the viogpudo guest driver (wharf injects it); gives proper
+  #                  desktop resolution + 2D. NOTE: display-only (KMDOD) — no hardware
+  #                  3D; Direct3D still falls back to software (WARP).
+  case "${DISPLAY_DEVICE:-ramfb}" in
+    virtio-gpu-pci|virtio-gpu) DISPLAY_OPTS=( -device virtio-gpu-pci ) ;;
+    *)                         DISPLAY_OPTS=( -device ramfb ) ;;
+  esac
+  DISPLAY_OPTS+=( -vnc "${VNC_HOST}:${VNC_DISPLAY}" )
 }
 
 display_hint() {
   log "Console: VNC at ${VNC_HOST}:$(display_port)  (use 127.0.0.1, NOT localhost)"
   log "RDP after install: 127.0.0.1:${RDP_PORT}  (user: ${USERNAME} / pass: ${PASSWORD})"
+  log "SSH after install: ssh ${USERNAME}@127.0.0.1 -p ${SSH_PORT}  (CI channel)"
 }
 
 display_open() {

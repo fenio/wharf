@@ -1,0 +1,53 @@
+# Example GitHub Actions workflow: run Windows 11 ARM tests on a self-hosted
+# macOS (Apple Silicon) runner using wharf. The runner must have: qemu, wimlib,
+# cdrtools, aria2 (brew), and a one-time golden VM (see the "provision" note).
+#
+# wharf runs Windows in QEMU+HVF; there is NO GPU acceleration (software/WARP
+# only), so this fits headless build/test/CLI work — not GPU games/benchmarks.
+name: windows-arm-ci
+
+on: [push, workflow_dispatch]
+
+jobs:
+  win11-tests:
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 90
+    env:
+      VM: ci-win11
+      WHARF: ${{ github.workspace }}/wharf/wharf
+      SSH_KEY: ${{ runner.temp }}/wharf_ci_key
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore CI SSH key
+        run: |
+          echo "${{ secrets.WHARF_CI_SSH_KEY }}" > "$SSH_KEY"
+          chmod 600 "$SSH_KEY"
+          ssh-keygen -y -f "$SSH_KEY" > "$SSH_KEY.pub"
+
+      # One-time provisioning is done out of band on the runner:
+      #   WHARF_HEADLESS=1 WHARF_SSH_PUBKEY=~/.wharf/ci_key.pub VERSION=11 wharf new ci-win11
+      #   wharf wait ci-win11 && wharf stop ci-win11 && wharf snapshot ci-win11 golden
+      # Thereafter each run resets from the golden snapshot for determinism.
+
+      - name: Reset VM to golden snapshot
+        run: |
+          "$WHARF" stop "$VM" || true
+          "$WHARF" reset "$VM" golden
+
+      - name: Boot + wait for ready
+        run: |
+          WHARF_HEADLESS=1 "$WHARF" run "$VM"
+          "$WHARF" wait "$VM" 1800
+
+      - name: Run tests over SSH
+        run: |
+          eval "$("$WHARF" endpoints "$VM" --json | python3 -c 'import sys,json;d=json.load(sys.stdin);print(f"P={d[\"ssh\"]};U={d[\"username\"]}")')"
+          scp -P "$P" -i "$SSH_KEY" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            ./ci/win-tests.ps1 "$U@127.0.0.1:C:/Windows/Temp/win-tests.ps1"
+          ssh -p "$P" -i "$SSH_KEY" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            "$U@127.0.0.1" 'powershell -ExecutionPolicy Bypass -File C:\Windows\Temp\win-tests.ps1'
+
+      - name: Teardown
+        if: always()
+        run: "$WHARF" stop "$VM" || true

@@ -52,8 +52,12 @@ wharf_image_name() {
 : "${WHARF_VMS:=$HOME/.wharf}"   # registry root for named VMs (wharf new/ls/rm)
 : "${STORAGE:=$WHARF_HOME/storage}"   # where ISO, disk, EFI vars live (default VM)
 : "${RDP_PORT:=13389}"           # host port forwarded to guest RDP (3389)
+: "${SSH_PORT:=12222}"           # host port forwarded to guest OpenSSH (22) — CI channel
 : "${VNC_DISPLAY:=0}"            # VNC display number (port = 5900 + this)
+: "${DISPLAY_DEVICE:=ramfb}"     # guest display: ramfb (default) or virtio-gpu-pci (2D accel/res)
 : "${USE_TPM:=N}"                # add an emulated TPM 2.0 (needs swtpm)
+: "${WHARF_SSH_KEY:=$HOME/.wharf/ci_key}"        # SSH keypair for the CI channel
+: "${WHARF_SSH_PUBKEY:=${WHARF_SSH_KEY}.pub}"    # baked into the guest at install
 : "${BOOT_ISO:=}"                # path to a pre-supplied Windows ARM ISO (BYO)
 : "${VERIFY:=Y}"                 # verify downloaded ISO against known SHA-256
 : "${VIRTIO_VERSION:=0.1.285}"   # qemus/virtiso-arm driver pack version

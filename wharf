@@ -17,6 +17,15 @@
 #   wharf install        create/install the default VM (legacy single-VM, in ./storage)
 #   wharf doctor         check host dependencies
 #
+# CI / headless commands:
+#   wharf endpoints <name> [--json]  print VNC/RDP/SSH ports + credentials
+#   wharf wait <name> [timeout]      block until the guest is SSH/CI-ready
+#   wharf snapshot <name> [tag]      save a golden disk image (default tag: golden)
+#   wharf reset <name> [tag]         restore the disk from a golden image
+#   (set WHARF_HEADLESS=1 to suppress auto-opening the VNC viewer;
+#    set WHARF_SSH_PUBKEY=/path/key.pub before `new` to bake in an SSH key;
+#    set DISPLAY_DEVICE=virtio-gpu-pci for a higher-res 2D desktop)
+#
 # With no [name], run/stop/status/view act on the default ./storage VM.
 # Settings: VERSION/RAM_SIZE/CPU_CORES/DISK_SIZE/USERNAME/PASSWORD via env or
 # wharf.conf; for `new`, they're captured into the VM's ~/.wharf/<name>/vm.conf.
@@ -29,16 +38,17 @@ export WHARF_HOME
 
 # shellcheck source=lib/config.sh
 source "$WHARF_HOME/lib/config.sh"
-for m in deps vm firmware disk network display qemu iso prepare; do
+for m in deps vm firmware disk network display qemu iso prepare ci; do
   # shellcheck disable=SC1090
   source "$WHARF_HOME/lib/$m.sh"
 done
 
-usage() { sed -n '3,28p' "$WHARF_HOME/wharf" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '3,32p' "$WHARF_HOME/wharf" | sed 's/^# \{0,1\}//'; }
 
 cmd_install() {
   deps_require qemu-system-aarch64 qemu-img
   config_summary
+  ensure_ssh_key           # auto-generate + bake the CI SSH key so SSH works out of the box
   : > "$STORAGE/.installing"   # state marker so 'wharf ls/status' shows "installing"
   firmware_setup           # edk2 code (ro) + writable vars copy
   iso_acquire              # download or locate the Windows ARM ISO  -> $ISO
@@ -46,7 +56,9 @@ cmd_install() {
   disk_create              # qemu-img create growable raw -> $DISK
   log "Starting installer. This is unattended — it will reboot itself to the desktop."
   qemu_boot install        # boot Setup (disk-first, CD fallback)
-  rm -f "$STORAGE/.installing"   # qemu is up now; clear the marker
+  vm_supervise_install     # babysit to SSH-ready, auto-recover firmware hangs
+  rm -f "$STORAGE/.installing"   # installed + ready; clear the marker
+  log "VM '$NAME' installed and ready. SSH: ssh ${USERNAME}@127.0.0.1 -p ${SSH_PORT} -i ~/.wharf/ci_key"
 }
 
 cmd_new() {
@@ -86,6 +98,10 @@ cmd_stop()   { [ -n "${1:-}" ] && vm_resolve "$1"; qemu_stop; }
 cmd_status() { [ -n "${1:-}" ] && vm_resolve "$1"; qemu_status; }
 cmd_view()   { [ -n "${1:-}" ] && vm_resolve "$1"; display_open; }
 cmd_doctor() { deps_check_all; }
+cmd_endpoints() { ci_endpoints "$@"; }
+cmd_wait()      { ci_wait "$@"; }
+cmd_snapshot()  { ci_snapshot "$@"; }
+cmd_reset()     { ci_reset "$@"; }
 
 main() {
   local sub="${1:-}"; shift || true
@@ -98,6 +114,10 @@ main() {
     stop)              cmd_stop "$@" ;;
     status)            cmd_status "$@" ;;
     view)              cmd_view "$@" ;;
+    endpoints|info)    cmd_endpoints "$@" ;;
+    wait)              cmd_wait "$@" ;;
+    snapshot)          cmd_snapshot "$@" ;;
+    reset)             cmd_reset "$@" ;;
     doctor)            cmd_doctor "$@" ;;
     ""|-h|--help|help) usage ;;
     *) die "Unknown subcommand: $sub (try: wharf help)" ;;

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   wharf unattended answer file (Windows 11 ARM64).
-  Adapted from dockur/windows-arm's proven win11arm64.xml — the parts that beat
+  Adapted from dockur/windows-arm's proven win11arm64.xml - the parts that beat
   the new Win11 OOBE: BypassNRO, SkipMachineOOBE/SkipUserOOBE, AutoLogon, RDP +
   firewall, debloat. Placeholders filled by lib/prepare.sh:_render_autounattend:
-    @IMAGE@    WIM edition (e.g. "Windows 11 Pro") — skips the "Select Image" screen
+    @IMAGE@    WIM edition (e.g. "Windows 11 Pro") - skips the "Select Image" screen
     @USERNAME@ @PASSWORD@   local admin account + autologon
     @REGION@   locale (e.g. en-US)      @KEYBOARD@  input locale (e.g. 0409:00000409)
 -->
@@ -95,6 +95,10 @@
         <RunSynchronousCommand wcm:action="add"><Order>1</Order><Path>reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\OOBE" /v BypassNRO /t REG_DWORD /d 1 /f</Path></RunSynchronousCommand>
         <RunSynchronousCommand wcm:action="add"><Order>2</Order><Path>reg.exe add "HKLM\Software\Policies\Microsoft\Windows\CloudContent" /v "DisableConsumerAccountStateContent" /t REG_DWORD /d 1 /f</Path></RunSynchronousCommand>
         <RunSynchronousCommand wcm:action="add"><Order>3</Order><Path>reg.exe add "HKLM\Software\Policies\Microsoft\Windows\CloudContent" /v "DisableWindowsConsumerFeatures" /t REG_DWORD /d 1 /f</Path></RunSynchronousCommand>
+        <!-- Run wharf guest setup via RunOnce (fires at first interactive logon, with
+             full admin since EnableLUA=false). More reliable than FirstLogonCommands,
+             which SkipMachineOOBE can suppress. -->
+        <RunSynchronousCommand wcm:action="add"><Order>4</Order><Path>reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" /v wharfSetup /t REG_SZ /d "powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File C:\OEM\wharf-setup.ps1" /f</Path></RunSynchronousCommand>
       </RunSynchronous>
     </component>
     <component name="Microsoft-Windows-TerminalServices-LocalSessionManager" processorArchitecture="arm64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
@@ -148,7 +152,8 @@
         <SynchronousCommand wcm:action="add"><Order>4</Order><CommandLine>cmd /C POWERCFG -X -standby-timeout-ac 0</CommandLine><Description>Disable sleep</Description></SynchronousCommand>
         <SynchronousCommand wcm:action="add"><Order>5</Order><CommandLine>reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v "HideFirstRunExperience" /t REG_DWORD /d 1 /f</CommandLine><Description>Skip Edge first-run</Description></SynchronousCommand>
         <SynchronousCommand wcm:action="add"><Order>6</Order><CommandLine>reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v "NoAutoUpdate" /t REG_DWORD /d 1 /f</CommandLine><Description>No auto Windows Update</Description></SynchronousCommand>
-        <SynchronousCommand wcm:action="add"><Order>7</Order><CommandLine>cmd /C if exist "C:\OEM\install.bat" start "Install" "cmd /C C:\OEM\install.bat"</CommandLine><Description>Run optional OEM script</Description></SynchronousCommand>
+        <SynchronousCommand wcm:action="add"><Order>7</Order><CommandLine>powershell.exe -ExecutionPolicy Bypass -File C:\OEM\wharf-setup.ps1</CommandLine><Description>wharf guest setup (install drivers + enable OpenSSH)</Description></SynchronousCommand>
+        <SynchronousCommand wcm:action="add"><Order>8</Order><CommandLine>cmd /C if exist "C:\OEM\install.bat" start "Install" "cmd /C C:\OEM\install.bat"</CommandLine><Description>Run optional OEM script</Description></SynchronousCommand>
       </FirstLogonCommands>
     </component>
   </settings>

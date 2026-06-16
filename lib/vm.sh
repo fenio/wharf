@@ -29,11 +29,13 @@ _vm_field_all() {
 
 # choose a free VNC display + RDP port (skip live ports and other VMs' reservations)
 vm_alloc_ports() {
-  local used_d used_p d p
+  local used_d used_p used_s d p s
   used_d="$(_vm_field_all VNC_DISPLAY | tr '\n' ' ')"
   used_p="$(_vm_field_all RDP_PORT | tr '\n' ' ')"
+  used_s="$(_vm_field_all SSH_PORT | tr '\n' ' ')"
   d=0;     while _port_listening $((5900+d)) || _in_list "$d" "$used_d"; do d=$((d+1)); done; VNC_DISPLAY=$d
   p=13389; while _port_listening "$p"        || _in_list "$p" "$used_p"; do p=$((p+1)); done; RDP_PORT=$p
+  s=12222; while _port_listening "$s"        || _in_list "$s" "$used_s"; do s=$((s+1)); done; SSH_PORT=$s
 }
 
 vm_save_conf() {
@@ -48,6 +50,7 @@ PASSWORD=$PASSWORD
 USE_TPM=$USE_TPM
 VNC_DISPLAY=$VNC_DISPLAY
 RDP_PORT=$RDP_PORT
+SSH_PORT=$SSH_PORT
 EOF
 }
 
