@@ -10,6 +10,10 @@ wharf new win11        # downloads + installs Windows 11 ARM, returns when SSH i
 ssh Docker@127.0.0.1 -p 12222 -i ~/.wharf/ci_key 'hostname'
 ```
 
+![wharf demo: one command to an SSH-ready Windows 11 ARM VM](docs/demo.gif)
+
+<sub>(the ~12-minute unattended Windows install is fast-forwarded; `wharf ls` and the `ssh` into Windows are live)</sub>
+
 It runs **QEMU directly on macOS with the HVF accelerator** (the same engine UTM
 uses for Windows — single layer, hardware-accelerated), wrapped in dockur-style
 automation: auto ISO download, virtio driver injection, unattended answer file,
