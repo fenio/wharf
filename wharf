@@ -33,7 +33,16 @@
 
 set -Eeuo pipefail
 
-WHARF_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve the real script location, following symlinks (so lib/ and assets/ are
+# found even when invoked via a symlink, e.g. Homebrew's bin/wharf -> libexec).
+_src="${BASH_SOURCE[0]}"
+while [ -h "$_src" ]; do
+  _dir="$(cd -P "$(dirname "$_src")" && pwd)"
+  _src="$(readlink "$_src")"
+  case "$_src" in /*) ;; *) _src="$_dir/$_src" ;; esac
+done
+WHARF_HOME="$(cd -P "$(dirname "$_src")" && pwd)"
+unset _src _dir
 export WHARF_HOME
 
 # shellcheck source=lib/config.sh
