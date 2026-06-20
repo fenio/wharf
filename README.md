@@ -44,16 +44,22 @@ The unfilled niche is exactly this: **headless, scriptable, auto-installing
 Windows 11 ARM on a Mac via QEMU+HVF — usable from CI.** That's `wharf`. UTM is the
 GUI answer; wharf is the CLI/CI answer.
 
-## Requirements
+## Install
 
-- Apple silicon Mac (M-series).
-- `brew install qemu` — must be the signed build with the HVF entitlement.
-- `brew install wimlib cdrtools` — driver injection + UDF ISO rebuild.
-- `brew install aria2` — optional, faster ISO download.
-- `brew install swtpm` — optional, only if you set `USE_TPM=Y`.
+```bash
+brew install fenio/tap/wharf
+wharf doctor
+```
 
-Run `wharf doctor` to check everything. An SSH keypair (`~/.wharf/ci_key`) is
-generated automatically on first use.
+That pulls `qemu` (the HVF-entitled build), `wimlib`, and `cdrtools`. Optional:
+`brew install aria2` (faster ISO downloads) and `brew install swtpm` (only if you
+set `USE_TPM=Y`).
+
+From source instead: clone the repo and run `./wharf` directly (same deps).
+
+Requirements: an **Apple silicon Mac**. `wharf doctor` verifies the toolchain and
+the QEMU HVF entitlement; an SSH keypair (`~/.wharf/ci_key`) is generated
+automatically on first use.
 
 ## Quickstart
 
