@@ -58,6 +58,7 @@ cmd_install() {
   deps_require qemu-system-aarch64 qemu-img
   config_summary
   ensure_ssh_key           # auto-generate + bake the CI SSH key so SSH works out of the box
+  mkdir -p "$STORAGE"      # ensure writable storage exists (load-time mkdir is best-effort)
   : > "$STORAGE/.installing"   # state marker so 'wharf ls/status' shows "installing"
   firmware_setup           # edk2 code (ro) + writable vars copy
   iso_acquire              # download or locate the Windows ARM ISO  -> $ISO

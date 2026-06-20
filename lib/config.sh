@@ -50,7 +50,7 @@ wharf_image_name() {
 
 : "${NAME:=wharf}"               # VM / process name
 : "${WHARF_VMS:=$HOME/.wharf}"   # registry root for named VMs (wharf new/ls/rm)
-: "${STORAGE:=$WHARF_HOME/storage}"   # where ISO, disk, EFI vars live (default VM)
+: "${STORAGE:=$WHARF_VMS/.default}"   # default-VM storage (writable home dir, not $WHARF_HOME which is read-only under Homebrew; hidden so `wharf ls` skips it)
 : "${RDP_PORT:=13389}"           # host port forwarded to guest RDP (3389)
 : "${SSH_PORT:=12222}"           # host port forwarded to guest OpenSSH (22) — CI channel
 : "${VNC_DISPLAY:=0}"            # VNC display number (port = 5900 + this)
@@ -76,7 +76,9 @@ config_paths() {
   ISO_PREPARED="$STORAGE/${NAME}.prepared.iso"   # after driver+XML injection
   PIDFILE="$STORAGE/qemu.pid"
   MONITOR="$STORAGE/qemu.monitor.sock"
-  mkdir -p "$STORAGE"
+  # don't fail at load if the path isn't writable (e.g. read-only Homebrew Cellar);
+  # commands that actually need it create it explicitly.
+  mkdir -p "$STORAGE" 2>/dev/null || true
 }
 config_paths
 
